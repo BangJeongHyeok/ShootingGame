@@ -14,7 +14,8 @@ public class Bullet : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        gameObject.transform.Translate(0,speed * Time.deltaTime, 0);
+        //gameObject.transform.Translate(0,speed * Time.deltaTime, 0);
+        gameObject.transform.Translate(Vector3.Normalize(new Vector3(1, 1, 0)));
 
 
         Vector3 pos = Camera.main.WorldToViewportPoint(transform.position);

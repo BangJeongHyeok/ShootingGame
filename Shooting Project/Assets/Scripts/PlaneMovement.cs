@@ -5,10 +5,17 @@ using UnityEngine.UI;
 
 public class PlaneMovement : MonoBehaviour
 {
-    [SerializeField] float MoveSpeed;
     [SerializeField] GameObject BulletPool;
+    [SerializeField] GameObject LevelUpEffect;
+    [SerializeField] GameObject Skill1;
+    [SerializeField] GameObject Skill2;
+    [SerializeField] Text LevelText;
     [SerializeField] PoolManager Pool;
     [SerializeField] Slider Level;
+    [SerializeField] float MoveSpeed;
+    [SerializeField] float Damage = 1;
+    [SerializeField] float FireDelay = 0.17f;
+    [SerializeField] int PlayerLevel = 1;
     float Exp = 0;
     bool isDelayEnd = true;
 
@@ -23,6 +30,9 @@ public class PlaneMovement : MonoBehaviour
     {
         KeyInput();
         LevelManager();
+
+
+        LevelText.text = "레벨 " + PlayerLevel.ToString() + " [ " + ((Level.value / Level.maxValue) * 100).ToString("N1") + "% ] ";
     }
 
     void KeyInput()
@@ -53,7 +63,7 @@ public class PlaneMovement : MonoBehaviour
             Exp += 3;
             Fire();
             isDelayEnd = false;
-            StartCoroutine("Delay");
+            StartCoroutine(Delay(FireDelay));
         }
     }
 
@@ -115,16 +125,47 @@ public class PlaneMovement : MonoBehaviour
     {
         Level.value = Mathf.Lerp(Level.value, Exp, 0.1f);
 
-        if (Level.value > Level.maxValue - 0.1f)
+        if (Level.value > Level.maxValue - 0.1f)//MaxValue의 최대값까지 도달하면
         {
             Level.maxValue = Level.maxValue += 5;
             Exp = 0;
+            PlayerLevel++;
+
+
+            LevelUpEffect.SetActive(true);
+            LevelUpEffect.GetComponent<Animator>().Play(0);
+            LevelUpEffect.transform.position = gameObject.transform.position;
+
+
+            if(PlayerLevel == 3)
+            {
+                Skill1.SetActive(true);
+            }
+            else if (PlayerLevel == 5)
+            {
+                Skill2.SetActive(true);
+            }
+
+            if (PlayerLevel > 5)
+            {
+                Damage = Mathf.Lerp(Damage, 4f, 0.1f);
+                FireDelay = Mathf.Lerp(FireDelay, 0.03f, 0.1f);
+                MoveSpeed = Mathf.Lerp(MoveSpeed, 8f, 0.1f);
+            }
+            else
+            {
+                Damage *= 1.2f;
+                FireDelay *= 0.8f;
+                MoveSpeed *= 1.2f;
+            }
+
+
         }
     }
 
-    IEnumerator Delay()
+    IEnumerator Delay(float firedelay)
     {
-        yield return new WaitForSeconds(0.13f);
+        yield return new WaitForSeconds(firedelay);
         isDelayEnd = true;
     }
 }
