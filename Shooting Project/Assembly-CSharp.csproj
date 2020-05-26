@@ -62,8 +62,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\BGScrolling.cs" />
+    <Compile Include="Assets\Scripts\BackGroundPool.cs" />
     <Compile Include="Assets\Scripts\Bullet.cs" />
+    <Compile Include="Assets\Scripts\EnemyBullet.cs" />
+    <Compile Include="Assets\Scripts\EnemyBulletManager.cs" />
+    <Compile Include="Assets\Scripts\EnemyMovement.cs" />
+    <Compile Include="Assets\Scripts\EnemyPool.cs" />
+    <Compile Include="Assets\Scripts\Explosion.cs" />
     <Compile Include="Assets\Scripts\PlaneMovement.cs" />
     <Compile Include="Assets\Scripts\PoolManager.cs" />
     <None Include="Assets\Sprites\43\LICENSE.txt" />

@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BGScrolling : MonoBehaviour
+public class Explosion : MonoBehaviour
 {
-    [SerializeField] GameObject [] BG;
     // Start is called before the first frame update
     void Start()
     {
@@ -14,6 +13,10 @@ public class BGScrolling : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+    }
+
+    void End()
+    {
+        gameObject.SetActive(false);
     }
 }

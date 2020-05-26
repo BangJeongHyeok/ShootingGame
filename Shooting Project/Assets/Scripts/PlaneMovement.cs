@@ -5,7 +5,10 @@ using UnityEngine.UI;
 
 public class PlaneMovement : MonoBehaviour
 {
+    float timer = 0;
     [SerializeField] GameObject BulletPool;
+    [SerializeField] GameObject ShieldObject;
+    SpriteRenderer ShieldColor;
     [SerializeField] GameObject LevelUpEffect;
     [SerializeField] GameObject Skill1;
     [SerializeField] GameObject Skill2;
@@ -13,16 +16,24 @@ public class PlaneMovement : MonoBehaviour
     [SerializeField] PoolManager Pool;
     [SerializeField] Slider Level;
     [SerializeField] float MoveSpeed;
-    [SerializeField] float Damage = 1;
-    [SerializeField] float FireDelay = 0.17f;
+    public static float Damage = 5;
+    SpriteRenderer PlayerSprite;
+    [SerializeField] float SingleFireDelay = 0.17f;
+    [SerializeField] float MultipleFireDelay = 0.4f;
     [SerializeField] int PlayerLevel = 1;
-    float Exp = 0;
+
+    float shieldalpha = 1f;
+    public static float Exp = 0;
     bool isDelayEnd = true;
+    bool Shield = false;
+
+    bool SingleShot = true;
 
 
     void Start()
     {
-        
+        PlayerSprite = GetComponent<SpriteRenderer>();
+        ShieldColor = ShieldObject.GetComponent<SpriteRenderer>();
     }
 
     // Update is called once per frame
@@ -30,7 +41,7 @@ public class PlaneMovement : MonoBehaviour
     {
         KeyInput();
         LevelManager();
-
+        ShieldAnimation();
 
         LevelText.text = "레벨 " + PlayerLevel.ToString() + " [ " + ((Level.value / Level.maxValue) * 100).ToString("N1") + "% ] ";
     }
@@ -60,20 +71,48 @@ public class PlaneMovement : MonoBehaviour
 
         if (Input.GetKey(KeyCode.X) && isDelayEnd)
         {
-            Exp += 3;
-            Fire();
-            isDelayEnd = false;
-            StartCoroutine(Delay(FireDelay));
+            if (SingleShot && isDelayEnd)
+            {
+                Fire(new Vector2(0,1));
+                isDelayEnd = false;
+                StartCoroutine(Delay(SingleFireDelay));
+                Exp += 0.2f;
+            }
+            else if(!SingleShot && isDelayEnd)
+            {
+                for (int i = -3; i < 3; i++)
+                {
+                    Fire(new Vector2(i * 0.1f, 1));
+                }
+                isDelayEnd = false;
+                StartCoroutine(Delay(MultipleFireDelay));
+                Exp += 0.8f;
+            }
+            
+        }
+
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            SingleShot = !SingleShot;
+        }
+
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            Shield = true;
+            shieldalpha = 1f;
+            ShieldObject.SetActive(true);
+            
         }
     }
 
-    void Fire()
+    void Fire(Vector2 DirVec)
     {
         for(int i = 0; i< Pool.Bullets.Count; i++)
         {
             if (Pool.Bullets[i] != null && !Pool.Bullets[i].activeInHierarchy)//지금 찾는 총알이 켜져있지 않은게 맞을때
             {
                 Pool.Bullets[i].SetActive(true);
+                Pool.Bullets[i].GetComponent<Bullet>().Dir = DirVec;
                 Pool.Bullets[i].transform.position = new Vector3(transform.position.x, transform.position.y, 0);
                 break;
             }
@@ -81,27 +120,25 @@ public class PlaneMovement : MonoBehaviour
             {
                 GameObject tempBullet = Instantiate(BulletPool, transform.position, Quaternion.identity, Pool.transform);//생성
                 Pool.Bullets[i] = tempBullet;//생성한걸 지금 이 배열에 넣음
+                Pool.Bullets[i].GetComponent<Bullet>().Dir = DirVec;
                 break;
             }
             else continue;
         }
+    }
 
-        //if (!Pool.Bullets[i].activeInHierarchy)//지금 찾는 총알이 켜져있지 않은게 맞을때
-        //{
-        //    Pool.Bullets[i].SetActive(true);
-        //    Pool.Bullets[i].transform.position = new Vector3(transform.position.x, transform.position.y, 0);
-        //    break;
-        //}
-        //else if (Pool.Bullets[i] == null)//값이 존재하지 않는 구역까지 도달하였을때(총알이 없는 곳)
-        //{
-        //    GameObject tempBullet = Instantiate(BulletPool, transform.position, Quaternion.identity, Pool.transform);//생성
-        //    tempBullet = Pool.Bullets[i];//생성한걸 지금 이 배열에 넣음
-        //    break;
-        //}
-        //else
-        //{
-        //    i++;//다음 총알 찾으러 ㄱ
-        //}
+    void ShieldAnimation()
+    {
+        ShieldObject.transform.Rotate(0, 0, 10 * Time.deltaTime);
+        ShieldColor.color = new Color(1f, 1f, 1f, shieldalpha);
+        if (shieldalpha < 0.01f)
+        {
+            shieldalpha = 0;
+            Shield = false;
+            ShieldObject.SetActive(false);
+        }
+        else
+            shieldalpha -= 0.33f * Time.deltaTime;
     }
 
     private void ScreenRect()
@@ -127,14 +164,14 @@ public class PlaneMovement : MonoBehaviour
 
         if (Level.value > Level.maxValue - 0.1f)//MaxValue의 최대값까지 도달하면
         {
-            Level.maxValue = Level.maxValue += 5;
+            Level.maxValue = Level.maxValue += 25;
             Exp = 0;
             PlayerLevel++;
 
 
             LevelUpEffect.SetActive(true);
-            LevelUpEffect.GetComponent<Animator>().Play(0);
             LevelUpEffect.transform.position = gameObject.transform.position;
+            LevelUpEffect.GetComponent<Animator>().Play(0);
 
 
             if(PlayerLevel == 3)
@@ -149,13 +186,15 @@ public class PlaneMovement : MonoBehaviour
             if (PlayerLevel > 5)
             {
                 Damage = Mathf.Lerp(Damage, 4f, 0.1f);
-                FireDelay = Mathf.Lerp(FireDelay, 0.03f, 0.1f);
+                SingleFireDelay = Mathf.Lerp(SingleFireDelay, 0.03f, 0.1f);
+                MultipleFireDelay = Mathf.Lerp(MultipleFireDelay, 0.1f, 0.1f);
                 MoveSpeed = Mathf.Lerp(MoveSpeed, 8f, 0.1f);
             }
             else
             {
                 Damage *= 1.2f;
-                FireDelay *= 0.8f;
+                SingleFireDelay *= 0.8f;
+                MultipleFireDelay *= 0.8f;
                 MoveSpeed *= 1.2f;
             }
 
@@ -163,9 +202,53 @@ public class PlaneMovement : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (!Shield)
+        {
+            if (collision.tag == "Enemy" || collision.tag == "EnemyBullet")
+            {
+                StartCoroutine(Hitted());
+                StartCoroutine(CameraShake(0.1f));
+            }
+        }
+        
+    }
+
     IEnumerator Delay(float firedelay)
     {
         yield return new WaitForSeconds(firedelay);
         isDelayEnd = true;
+    }
+
+
+    IEnumerator CameraShake(float time)
+    {
+        timer = 0;
+        while (time > timer)
+        {
+            timer += Time.deltaTime;
+            Vector2 ShakeAmount;
+            ShakeAmount = Random.insideUnitCircle * 0.07f;
+
+                Camera.main.transform.position += new Vector3(ShakeAmount.x, ShakeAmount.y, 0);
+                yield return new WaitForSeconds(0.03f);
+                Camera.main.transform.position -= new Vector3(ShakeAmount.x, ShakeAmount.y, 0);
+        }
+    }
+
+    IEnumerator Hitted()
+    {
+        PlayerSprite.color = new Color(255, 0, 0, 255);
+        yield return new WaitForSeconds(0.08f);
+        PlayerSprite.color = new Color(255, 255, 255, 255);
+        yield return new WaitForSeconds(0.08f);
+        PlayerSprite.color = new Color(255, 0, 0, 255);
+        yield return new WaitForSeconds(0.08f);
+        PlayerSprite.color = new Color(255, 255, 255, 255);
+        yield return new WaitForSeconds(0.08f);
+        PlayerSprite.color = new Color(255, 0, 0, 255);
+        yield return new WaitForSeconds(0.08f);
+        PlayerSprite.color = new Color(255, 255, 255, 255);
     }
 }
